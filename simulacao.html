@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Automação na Pecuária Leiteira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .scene {
+            transition: background-color 0.8s ease;
+        }
+
+        .celestial-body,
+        .light-beam,
+        .light-bulb,
+        .curral-interior {
+            transition: all 0.8s ease-in-out;
+        }
+        
+        /* CORREÇÃO: Seletor alterado para #fan-blades (ID) em vez de .fan-blades (classe) */
+        #fan-blades.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 9999px;
+            opacity: 0.8;
+            animation: move-cloud linear infinite;
+        }
+        .cloud-1 { top: 10%; width: 120px; height: 35px; animation-duration: 75s; }
+        .cloud-2 { top: 20%; width: 150px; height: 45px; animation-duration: 60s; animation-delay: -15s; }
+        .cloud-3 { top: 15%; width: 100px; height: 30px; animation-duration: 90s; animation-delay: -30s; }
+
+        @keyframes move-cloud {
+            from { transform: translateX(-150px); }
+            to { transform: translateX(100vw); }
+        }
+
+        .heat-haze {
+            position: absolute;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255, 100, 0, 0.15) 0%, rgba(255, 100, 0, 0) 70%);
+            animation: pulse 2s infinite ease-in-out;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .heat-haze.active {
+            opacity: 1;
+        }
+
+        .light-beam {
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250%; height: 150px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(255, 245, 200, 0.5) 0%, rgba(255, 245, 200, 0) 70%);
+            clip-path: polygon(35% 0, 65% 0, 100% 100%, 0% 100%);
+            opacity: 0; z-index: 25;
+        }
+
+        .light-beam.on {
+            opacity: 1;
+        }
+
+        .cow-body {
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #simulation-mode {
+            transition: all 0.3s ease;
+        }
+        
+        /* --- Animação do Sprinkler --- */
+        .sprinkler-head {
+            background-color: #718096; /* gray-500 */
+            border-radius: 50%;
+        }
+        .water-droplet {
+            position: absolute;
+            top: 50%;
+            width: 3px; height: 8px; /* Formato de gota */
+            background: rgba(127, 207, 255, 0.8); /* Cor de água */
+            border-radius: 50%;
+            opacity: 0;
+        }
+        .spraying .water-droplet {
+            animation-name: fall;
+            animation-duration: 1.2s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+        
+        @keyframes fall {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(140px); opacity: 0; }
+        }
+
+        /* Espalha as gotas e atrasa a animação para efeito de spray */
+        .spraying .water-droplet:nth-child(1) { left: 0%; animation-delay: 0s; }
+        .spraying .water-droplet:nth-child(2) { left: 100%; animation-delay: 0.6s; }
+        .spraying .water-droplet:nth-child(3) { left: 33%; animation-delay: 0.2s; }
+        .spraying .water-droplet:nth-child(4) { left: 66%; animation-delay: 0.9s; }
+
+    </style>
+</head>
+
+<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+    <div class="w-full h-full max-w-screen-2xl mx-auto p-4 flex flex-col gap-4">
+        <div class="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+            
+            <div class="col-span-1 lg:col-span-7 bg-sky-400 relative overflow-hidden rounded-lg min-h-[400px] lg:min-h-0" id="scene">
+                <div class="cloud cloud-1"></div>
+                <div class="cloud cloud-2"></div>
+                <div class="cloud cloud-3"></div>
+
+                <div id="sun" class="celestial-body w-20 h-20 bg-yellow-300 rounded-full absolute top-8 left-16 opacity-100"></div>
+                <div id="moon" class="celestial-body w-16 h-16 bg-gray-200 rounded-full absolute top-8 left-16 shadow-inner opacity-0" style="transform: translateX(-200px);"></div>
+                
+                <div class="absolute bottom-0 w-full h-1/3 bg-green-600"></div>
+                <div class="absolute bottom-0 w-full h-1/3 bg-lime-700" style="clip-path: polygon(0 100%, 100% 100%, 100% 60%, 70% 80%, 30% 55%, 0 70%);"></div>
+                
+                <div class="absolute bottom-[33.33%] left-8 w-40 h-24">
+                    <div class="w-full h-full bg-white rounded-t-lg shadow-lg"></div>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-12 bg-red-800 rounded-t-lg" style="clip-path: polygon(0 100%, 50% 0, 100% 100%); transform: translate(-50%, -90%);"></div>
+                </div>
+                
+                <div class="absolute bottom-[33.33%] right-10 w-80 h-48 flex flex-col items-center">
+                    <div class="w-96 h-10 bg-gray-600 -mb-1 z-10 rounded-t-md"></div>
+                    <div id="curral-interior" class="curral-interior w-80 h-40 bg-yellow-100 p-4 border-4 border-yellow-800 flex justify-around items-end relative">
+                        <div class="w-4 h-full bg-yellow-700 absolute left-2 top-0"></div>
+                        <div class="w-4 h-full bg-yellow-700 absolute right-2 top-0"></div>
+                        
+                        <div class="sprinkler-head absolute top-1 left-1/4 w-3 h-3 z-20">
+                            <div class="water-droplet"></div><div class="water-droplet"></div><div class="water-droplet"></div><div class="water-droplet"></div>
+                        </div>
+                        <div class="sprinkler-head absolute top-1 right-1/4 w-3 h-3 z-20">
+                           <div class="water-droplet"></div><div class="water-droplet"></div><div class="water-droplet"></div><div class="water-droplet"></div>
+                        </div>
+
+                        <div class="absolute top-2 left-2 w-8 h-10 bg-gray-300 border-2 border-gray-500 rounded-md flex flex-col items-center p-1 z-20">
+                            <div class="w-2 h-2 bg-red-500 rounded-full mb-1"></div>
+                            <div class="w-4 h-1 bg-blue-500"></div>
+                            <p class="text-[6px] font-bold">SISTEMA</p>
+                        </div>
+                        
+                        <div class="absolute top-2 right-1/2 translate-x-1/2 w-12 h-12 flex items-center justify-center z-30">
+                            <div id="fan-blades" class="w-10 h-10 relative">
+                                <div class="absolute w-full h-1 bg-gray-500 top-1/2 -translate-y-1/2 rounded origin-center"></div>
+                                <div class="absolute w-full h-1 bg-gray-500 top-1/2 -translate-y-1/2 rounded origin-center" style="transform: rotate(90deg);"></div>
+                            </div>
+                        </div>
+
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 z-30">
+                            <div class="w-4 h-2 bg-gray-500"></div>
+                            <div id="light-bulb" class="light-bulb w-6 h-6 bg-gray-400 rounded-full border-2 border-gray-500"></div>
+                            <div id="light-beam" class="light-beam"></div>
+                        </div>
+
+                        <div id="cow-area" class="w-full h-full relative z-20">
+                            <div class="heat-haze" id="heat-haze"></div>
+                             <div class="absolute bottom-2 left-8 w-24 h-16 cow-body">
+                                <svg viewBox="0 0 100 70" fill="#fff" stroke="#000" stroke-width="2">
+                                    <path d="M 85,40 C 95,55 90,65 80,65 L 20,65 C 10,65 5,55 15,40 C 20,30 30,20 40,25 C 50,30 60,30 70,25 C 80,20 90,30 85,40 Z" />
+                                    <path d="M 70,25 C 70,15 80,5 85,15 C 90,25 80,30 70,25" />
+                                    <line x1="25" y1="65" x2="25" y2="70" /> <line x1="75" y1="65" x2="75" y2="70" />
+                                </svg>
+                            </div>
+                             <div class="absolute bottom-2 right-8 w-24 h-16 cow-body">
+                                <svg viewBox="0 0 100 70" fill="#D1D5DB" stroke="#000" stroke-width="2">
+                                     <path d="M 85,40 C 95,55 90,65 80,65 L 20,65 C 10,65 5,55 15,40 C 20,30 30,20 40,25 C 50,30 60,30 70,25 C 80,20 90,30 85,40 Z" />
+                                     <path d="M 70,25 C 70,15 80,5 85,15 C 90,25 80,30 70,25" />
+                                     <line x1="25" y1="65" x2="25" y2="70" /> <line x1="75" y1="65" x2="75" y2="70" />
+                                 </svg>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 lg:col-span-5 bg-gray-200 p-4 flex flex-col justify-center rounded-lg">
+                <div class="bg-white rounded-lg shadow-md p-6 h-full flex flex-col max-h-[85vh] lg:max-h-full">
+                    <h1 class="text-2xl font-bold text-blue-700 mb-4">Painel de Controle - Pico W</h1>
+                    
+                    <h2 class="text-xl font-bold text-gray-700 mb-2">Status Atual</h2>
+                    <table class="w-full text-left mb-6">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="p-2 rounded-tl-lg">Sensor/Atuador</th>
+                                <th class="p-2 rounded-tr-lg">Valor/Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-300">
+                            <tr class="bg-gray-50">
+                                <td class="p-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v12a5 5 0 005 5h1a1 1 0 001-1v-2a1 1 0 00-1-1h-1z" /></svg>
+                                    <span>Temperatura</span>
+                                </td>
+                                <td id="temp-display" class="p-2 font-semibold">25.0 °C</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>
+                                    <span>Umidade</span>
+                                </td>
+                                <td id="humidity-display" class="p-2 font-semibold">65.0 %</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="p-2 flex items-center gap-2">
+                                    <svg id="luminosity-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    <span>Luminosidade</span>
+                                </td>
+                                <td id="luminosity-display" class="p-2 font-semibold">95.0 %</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                    <span>Luzes</span>
+                                </td>
+                                <td id="light-status" class="p-2 font-semibold">Desligadas</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="p-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a8 8 0 11-12.856-12.856 8 8 0 0112.856 12.856z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h6" /></svg>
+                                    <span>Ventilador</span>
+                                </td>
+                                <td id="fan-status" class="p-2 font-semibold">Desligado</td>
+                            </tr>
+                             <tr>
+                                <td class="p-2 flex items-center gap-2">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5 7.5a2.5 2.5 0 115 0v3.382a1.5 1.5 0 01-.553 1.176l-2.447 2.447a1.5 1.5 0 01-2.121 0l-2.447-2.447A1.5 1.5 0 012 10.882V7.5A2.5 2.5 0 015 7.5zM12.5 7.5a2.5 2.5 0 115 0v3.382a1.5 1.5 0 01-.553 1.176l-2.447 2.447a1.5 1.5 0 01-2.121 0l-2.447-2.447A1.5 1.5 0 0112 10.882V7.5z" /></svg>
+                                    <span>Sprinklers</span>
+                                </td>
+                                <td id="humidifier-status" class="p-2 font-semibold">Desligados</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h2 class="text-xl font-bold text-gray-700 mb-2">Histórico Recente dos Sensores</h2>
+                    <div class="flex-grow overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-blue-600 text-white sticky top-0">
+                                <tr>
+                                    <th class="p-2 rounded-tl-lg">Data e Hora</th>
+                                    <th class="p-2">Temp.</th>
+                                    <th class="p-2 rounded-tr-lg">Umidade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" class="divide-y divide-gray-300"></tbody>
+                        </table>
+                    </div>
+                     <div id="pagination-controls" class="flex justify-between items-center mt-4 pt-4 border-t border-gray-300">
+                        <button id="prev-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">&lt; Anterior</button>
+                        <span id="page-info" class="font-semibold text-gray-700"></span>
+                        <button id="next-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">Próxima &gt;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-shrink-0 bg-gray-700 p-4 rounded-lg flex flex-col items-center justify-center gap-4">
+            <div class="w-full flex justify-center items-center gap-4">
+                 <h2 class="text-xl font-bold text-white text-center sm:text-left">Controle da Simulação:</h2>
+                 <span id="simulation-mode" class="bg-green-500 text-white font-bold py-1 px-3 rounded-full text-sm">Modo Automático</span>
+            </div>
+            <div class="w-full flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8">
+                <div class="flex items-center gap-2">
+                    <label for="temp-slider" class="text-lg text-gray-300">Temperatura:</label>
+                    <input type="range" id="temp-slider" min="15" max="40" value="25" class="w-48 h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    <span id="temp-control-display" class="font-bold text-white w-12 text-center">25°C</span>
+                </div>
+                 <div class="flex items-center gap-2">
+                    <label for="humidity-slider" class="text-lg text-gray-300">Umidade:</label>
+                    <input type="range" id="humidity-slider" min="30" max="90" value="65" class="w-48 h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    <span id="humidity-control-display" class="font-bold text-white w-12 text-center">65%</span>
+                </div>
+                <div>
+                    <button id="day-night-toggle" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg">
+                        Mudar para Noite
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Elementos do DOM ---
+        const tempSlider = document.getElementById('temp-slider');
+        const humiditySlider = document.getElementById('humidity-slider');
+        const dayNightToggle = document.getElementById('day-night-toggle');
+        const tempControlDisplay = document.getElementById('temp-control-display');
+        const humidityControlDisplay = document.getElementById('humidity-control-display');
+        const tempDisplay = document.getElementById('temp-display');
+        const humidityDisplay = document.getElementById('humidity-display');
+        const luminosityDisplay = document.getElementById('luminosity-display');
+        const fanStatus = document.getElementById('fan-status');
+        const lightStatus = document.getElementById('light-status');
+        const humidifierStatus = document.getElementById('humidifier-status');
+        const luminosityIcon = document.getElementById('luminosity-icon');
+        const historyTableBody = document.getElementById('history-table-body');
+        const scene = document.getElementById('scene');
+        const sun = document.getElementById('sun');
+        const moon = document.getElementById('moon');
+        const fanBlades = document.getElementById('fan-blades');
+        const lightBulb = document.getElementById('light-bulb');
+        const lightBeam = document.getElementById('light-beam');
+        const heatHaze = document.getElementById('heat-haze');
+        const sprinklerHeads = document.querySelectorAll('.sprinkler-head');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const simulationModeDisplay = document.getElementById('simulation-mode');
+
+        // --- Estado da Simulação, Limites e Paginação ---
+        let isNight = false;
+        const TEMP_THRESHOLD = 28;
+        const HUMIDITY_THRESHOLD_LOW = 50;
+        let sensorHistory = [];
+        let currentPage = 1;
+        const ROWS_PER_PAGE = 8;
+        
+        // --- Controle de Modo (Automático vs. Manual) ---
+        let isManualControl = false;
+        let manualControlTimeout = null;
+
+        // --- Lógica de Automação e Simulação ---
+        function updateSimulation() {
+            const temp = parseFloat(tempSlider.value);
+            const humidity = parseFloat(humiditySlider.value);
+
+            tempControlDisplay.textContent = `${Math.round(temp)}°C`;
+            humidityControlDisplay.textContent = `${Math.round(humidity)}%`;
+
+            const areLightsOn = isNight;
+            const isFanOn = temp > TEMP_THRESHOLD;
+            const areHumidifiersOn = humidity < HUMIDITY_THRESHOLD_LOW;
+            
+            // --- Atualização da Cena Visual ---
+            fanBlades.classList.toggle('spinning', isFanOn);
+            heatHaze.classList.toggle('active', isFanOn);
+            lightBulb.classList.toggle('bg-yellow-300', areLightsOn);
+            lightBulb.classList.toggle('bg-gray-400', !areLightsOn);
+            lightBeam.classList.toggle('on', areLightsOn);
+            sprinklerHeads.forEach(sprinkler => sprinkler.classList.toggle('spraying', areHumidifiersOn));
+            
+            // --- Atualização do Dashboard ---
+            tempDisplay.textContent = `${temp.toFixed(1)} °C`;
+            humidityDisplay.textContent = `${humidity.toFixed(1)} %`;
+            luminosityDisplay.textContent = areLightsOn ? '5.0 %' : '95.0 %';
+            lightStatus.textContent = areLightsOn ? 'Ligadas' : 'Desligadas';
+            fanStatus.textContent = isFanOn ? 'Ligado' : 'Desligado';
+            humidifierStatus.textContent = areHumidifiersOn ? 'Ligados' : 'Desligados';
+        }
+
+        function toggleDayNight() {
+            isNight = !isNight;
+            scene.classList.toggle('bg-sky-400', !isNight);
+            scene.classList.toggle('bg-gray-900', isNight);
+            document.getElementById('curral-interior').classList.toggle('bg-yellow-100', !isNight);
+            document.getElementById('curral-interior').classList.toggle('bg-yellow-900/50', isNight);
+            sun.classList.toggle('opacity-100', !isNight);
+            sun.classList.toggle('opacity-0', isNight);
+            moon.classList.toggle('opacity-100', isNight);
+            moon.classList.toggle('opacity-0', !isNight);
+
+            if (isNight) {
+                moon.style.transform = 'translateX(0)';
+                sun.style.transform = 'translateY(200px)';
+                dayNightToggle.textContent = 'Mudar para Dia';
+                dayNightToggle.classList.replace('bg-blue-500', 'bg-yellow-500');
+                dayNightToggle.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+                luminosityIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
+            } else {
+                sun.style.transform = 'translateY(0)';
+                moon.style.transform = 'translateX(-200px)';
+                dayNightToggle.textContent = 'Mudar para Noite';
+                dayNightToggle.classList.replace('bg-yellow-500', 'bg-blue-500');
+                dayNightToggle.classList.replace('hover:bg-yellow-600', 'hover:bg-blue-600');
+                luminosityIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`;
+            }
+            updateSimulation();
+        }
+
+        function simulationTick() {
+            if (isManualControl) return;
+            const minTemp = parseFloat(tempSlider.min);
+            const maxTemp = parseFloat(tempSlider.max);
+            const newTemp = Math.random() * (maxTemp - minTemp) + minTemp;
+            const minHumidity = parseFloat(humiditySlider.min);
+            const maxHumidity = parseFloat(humiditySlider.max);
+            const newHumidity = Math.random() * (maxHumidity - minHumidity) + minHumidity;
+            tempSlider.value = newTemp;
+            humiditySlider.value = newHumidity;
+            updateSimulation();
+        }
+
+        function addHistoryEntry() {
+            const now = new Date();
+            const timestamp = now.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+            const temp = parseFloat(tempDisplay.textContent);
+            const humidity = parseFloat(humidityDisplay.textContent);
+            sensorHistory.unshift({ timestamp, temp, humidity });
+            if (currentPage === 1) {
+                renderHistoryTable();
+            } else {
+                updatePaginationControls();
+            }
+        }
+        
+        function renderHistoryTable() {
+            historyTableBody.innerHTML = '';
+            const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+            const endIndex = startIndex + ROWS_PER_PAGE;
+            const pageData = sensorHistory.slice(startIndex, endIndex);
+            if (pageData.length === 0 && sensorHistory.length > 0) {
+                currentPage = Math.ceil(sensorHistory.length / ROWS_PER_PAGE);
+                renderHistoryTable();
+                return;
+            }
+            pageData.forEach((entry) => {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td class="p-2">${entry.timestamp}</td>
+                    <td class="p-2">${entry.temp.toFixed(1)} °C</td>
+                    <td class="p-2">${entry.humidity.toFixed(1)} %</td>
+                `;
+                historyTableBody.appendChild(newRow);
+            });
+            updatePaginationControls();
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(sensorHistory.length / ROWS_PER_PAGE) || 1;
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+        }
+
+        function switchToManualMode() {
+            isManualControl = true;
+            simulationModeDisplay.textContent = "Modo Manual";
+            simulationModeDisplay.classList.replace('bg-green-500', 'bg-orange-500');
+            clearTimeout(manualControlTimeout);
+            manualControlTimeout = setTimeout(switchToAutomaticMode, 10000);
+        }
+
+        function switchToAutomaticMode() {
+            isManualControl = false;
+            simulationModeDisplay.textContent = "Modo Automático";
+            simulationModeDisplay.classList.replace('bg-orange-500', 'bg-green-500');
+        }
+
+        tempSlider.addEventListener('input', () => {
+            switchToManualMode();
+            updateSimulation();
+        });
+        humiditySlider.addEventListener('input', () => {
+            switchToManualMode();
+            updateSimulation();
+        });
+        dayNightToggle.addEventListener('click', toggleDayNight);
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderHistoryTable();
+            }
+        });
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(sensorHistory.length / ROWS_PER_PAGE);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderHistoryTable();
+            }
+        });
+
+        // --- Inicialização ---
+        updateSimulation();
+        renderHistoryTable();
+        setInterval(simulationTick, 2500);
+        setInterval(addHistoryEntry, 5000);
+    </script>
+</body>
+</html>
