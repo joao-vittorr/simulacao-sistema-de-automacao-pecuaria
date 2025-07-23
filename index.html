@@ -25,8 +25,7 @@
         .curral-interior {
             transition: all 0.8s ease-in-out;
         }
-        
-        /* CORREÇÃO: Seletor alterado para #fan-blades (ID) em vez de .fan-blades (classe) */
+
         #fan-blades.spinning {
             animation: spin 1s linear infinite;
         }
@@ -65,6 +64,11 @@
             opacity: 1;
         }
 
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
         .light-beam {
             position: absolute;
             top: 32px;
@@ -97,16 +101,15 @@
             transition: all 0.3s ease;
         }
         
-        /* --- Animação do Sprinkler --- */
         .sprinkler-head {
-            background-color: #718096; /* gray-500 */
+            background-color: #718096;
             border-radius: 50%;
         }
         .water-droplet {
             position: absolute;
             top: 50%;
-            width: 3px; height: 8px; /* Formato de gota */
-            background: rgba(127, 207, 255, 0.8); /* Cor de água */
+            width: 3px; height: 8px;
+            background: rgba(127, 207, 255, 0.8);
             border-radius: 50%;
             opacity: 0;
         }
@@ -122,12 +125,10 @@
             100% { transform: translateY(140px); opacity: 0; }
         }
 
-        /* Espalha as gotas e atrasa a animação para efeito de spray */
         .spraying .water-droplet:nth-child(1) { left: 0%; animation-delay: 0s; }
         .spraying .water-droplet:nth-child(2) { left: 100%; animation-delay: 0.6s; }
         .spraying .water-droplet:nth-child(3) { left: 33%; animation-delay: 0.2s; }
         .spraying .water-droplet:nth-child(4) { left: 66%; animation-delay: 0.9s; }
-
     </style>
 </head>
 
@@ -186,14 +187,14 @@
                         <div id="cow-area" class="w-full h-full relative z-20">
                             <div class="heat-haze" id="heat-haze"></div>
                              <div class="absolute bottom-2 left-8 w-24 h-16 cow-body">
-                                <svg viewBox="0 0 100 70" fill="#fff" stroke="#000" stroke-width="2">
-                                    <path d="M 85,40 C 95,55 90,65 80,65 L 20,65 C 10,65 5,55 15,40 C 20,30 30,20 40,25 C 50,30 60,30 70,25 C 80,20 90,30 85,40 Z" />
-                                    <path d="M 70,25 C 70,15 80,5 85,15 C 90,25 80,30 70,25" />
-                                    <line x1="25" y1="65" x2="25" y2="70" /> <line x1="75" y1="65" x2="75" y2="70" />
-                                </svg>
-                            </div>
+                                 <svg viewBox="0 0 100 70" fill="#fff" stroke="#000" stroke-width="2">
+                                     <path d="M 85,40 C 95,55 90,65 80,65 L 20,65 C 10,65 5,55 15,40 C 20,30 30,20 40,25 C 50,30 60,30 70,25 C 80,20 90,30 85,40 Z" />
+                                     <path d="M 70,25 C 70,15 80,5 85,15 C 90,25 80,30 70,25" />
+                                     <line x1="25" y1="65" x2="25" y2="70" /> <line x1="75" y1="65" x2="75" y2="70" />
+                                 </svg>
+                             </div>
                              <div class="absolute bottom-2 right-8 w-24 h-16 cow-body">
-                                <svg viewBox="0 0 100 70" fill="#D1D5DB" stroke="#000" stroke-width="2">
+                                 <svg viewBox="0 0 100 70" fill="#D1D5DB" stroke="#000" stroke-width="2">
                                      <path d="M 85,40 C 95,55 90,65 80,65 L 20,65 C 10,65 5,55 15,40 C 20,30 30,20 40,25 C 50,30 60,30 70,25 C 80,20 90,30 85,40 Z" />
                                      <path d="M 70,25 C 70,15 80,5 85,15 C 90,25 80,30 70,25" />
                                      <line x1="25" y1="65" x2="25" y2="70" /> <line x1="75" y1="65" x2="75" y2="70" />
@@ -275,10 +276,18 @@
                             <tbody id="history-table-body" class="divide-y divide-gray-300"></tbody>
                         </table>
                     </div>
-                     <div id="pagination-controls" class="flex justify-between items-center mt-4 pt-4 border-t border-gray-300">
-                        <button id="prev-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">&lt; Anterior</button>
-                        <span id="page-info" class="font-semibold text-gray-700"></span>
-                        <button id="next-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">Próxima &gt;</button>
+                     <div id="pagination-controls" class="flex justify-between items-center flex-wrap gap-4 mt-4 pt-4 border-t border-gray-300">
+                        <div class="flex items-center gap-4">
+                            <button id="prev-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">&lt; Anterior</button>
+                            <span id="page-info" class="font-semibold text-gray-700"></span>
+                            <button id="next-page" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors pagination-btn">Próxima &gt;</button>
+                        </div>
+                        <button id="download-csv-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                           </svg>
+                           Baixar CSV
+                       </button>
                     </div>
                 </div>
             </div>
@@ -336,6 +345,7 @@
         const nextPageBtn = document.getElementById('next-page');
         const pageInfo = document.getElementById('page-info');
         const simulationModeDisplay = document.getElementById('simulation-mode');
+        const downloadCsvBtn = document.getElementById('download-csv-btn'); // --- NOVO ---
 
         // --- Estado da Simulação, Limites e Paginação ---
         let isNight = false;
@@ -462,12 +472,43 @@
             nextPageBtn.disabled = currentPage === totalPages;
         }
 
+        // --- NOVO: Função para baixar o histórico como CSV ---
+        function downloadCSV() {
+            if (sensorHistory.length === 0) {
+                alert("Não há dados no histórico para baixar.");
+                return;
+            }
+
+            const headers = '"Data e Hora","Temperatura (°C)","Umidade (%)"';
+            
+            // Mapeia o histórico (invertido para ordem cronológica) para linhas CSV
+            const csvRows = [...sensorHistory].reverse().map(row => {
+                const timestamp = `"${row.timestamp}"`;
+                const temp = `"${row.temp.toFixed(1)}"`;
+                const humidity = `"${row.humidity.toFixed(1)}"`;
+                return [timestamp, temp, humidity].join(',');
+            });
+            
+            const csvContent = [headers, ...csvRows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'historico_sensores.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         function switchToManualMode() {
             isManualControl = true;
             simulationModeDisplay.textContent = "Modo Manual";
             simulationModeDisplay.classList.replace('bg-green-500', 'bg-orange-500');
             clearTimeout(manualControlTimeout);
-            manualControlTimeout = setTimeout(switchToAutomaticMode, 10000);
+            manualControlTimeout = setTimeout(switchToAutomaticMode, 10000); // Volta ao modo automático após 10s de inatividade
         }
 
         function switchToAutomaticMode() {
@@ -476,6 +517,7 @@
             simulationModeDisplay.classList.replace('bg-orange-500', 'bg-green-500');
         }
 
+        // --- Event Listeners ---
         tempSlider.addEventListener('input', () => {
             switchToManualMode();
             updateSimulation();
@@ -498,6 +540,8 @@
                 renderHistoryTable();
             }
         });
+        downloadCsvBtn.addEventListener('click', downloadCSV); // --- NOVO ---
+
 
         // --- Inicialização ---
         updateSimulation();
